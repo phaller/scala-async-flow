@@ -1,4 +1,5 @@
-package scala.async.flow
+package com.phaller.async
+package test
 
 import org.reactivestreams.{Subscriber, Subscription}
 

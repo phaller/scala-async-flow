@@ -1,4 +1,4 @@
-package scala.async.flow
+package com.phaller.async
 
 import scala.util.{Try, Success => TSuccess, Failure => TFailure}
 

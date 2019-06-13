@@ -1,9 +1,9 @@
-package scala.async.flow
+package com.phaller.async
 
 /** Unforgeable cancellation tag used to cancel asynchronous
   * publishers.
   */
-final class CancellationTag private[flow] () {
+final class CancellationTag private[async] () {
   @volatile
   private var cancelled = false
 

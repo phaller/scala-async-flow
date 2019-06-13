@@ -1,4 +1,4 @@
-package scala.async.flow
+package com.phaller.async
 
 trait Context[T] {
   def yieldNext(evt: T): Unit

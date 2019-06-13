@@ -1,4 +1,4 @@
-package scala.async.flow
+package com.phaller.async
 
 import org.reactivestreams.{Publisher => RSPublisher, Subscriber, Subscription => RSSubscription}
 

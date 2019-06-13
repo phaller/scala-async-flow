@@ -1,4 +1,4 @@
-package scala.async.flow
+package com.phaller.async
 
 import scala.language.implicitConversions
 
@@ -113,7 +113,7 @@ class Flow[T](tag: Option[CancellationTag] = None) extends Publisher[T] with Con
   def isCancelled: Boolean =
     tag.nonEmpty && tag.get.isCancelled
 
-  private[flow] def init(f: Context[T] => Future[T]): Unit = synchronized {
+  private[async] def init(f: Context[T] => Future[T]): Unit = synchronized {
     // do not even start if already cancelled
     // TODO: add test
     if (isCancelled)
@@ -122,12 +122,12 @@ class Flow[T](tag: Option[CancellationTag] = None) extends Publisher[T] with Con
     body = f
   }
 
-  private[flow] def dropExcept(buf: BufferedSubscription[_]): Unit = {
+  private[async] def dropExcept(buf: BufferedSubscription[_]): Unit = {
     for (b <- bufferOf.values if b != buf)
       b.disable()
   }
 
-  private[flow] def undropAll(): Unit = {
+  private[async] def undropAll(): Unit = {
     for (b <- bufferOf.values)
       b.enable()
   }
