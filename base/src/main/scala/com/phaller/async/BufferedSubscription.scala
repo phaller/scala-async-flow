@@ -1,16 +1,19 @@
+/*
+ * Copyright Philipp Haller
+ *
+ * Licensed under Apache License 2.0
+ * (http://www.apache.org/licenses/LICENSE-2.0).
+ */
 package com.phaller.async
 
-import org.reactivestreams.{Subscriber, Subscription}
-
+import java.util.concurrent.Flow
 import java.util.concurrent.locks.ReentrantLock
 
 import scala.concurrent.{Future, Promise, ExecutionContext}
 import scala.util.{Try, Success, Failure}
 import scala.collection.mutable.Queue
 
-import scala.async.internal.Awaitable
-
-final class BufferedSubscription[A](obs: Flow[_]) extends DynamicSubscription[A] with Subscriber[A] {
+final class BufferedSubscription[A](obs: PublisherImpl[_]) extends DynamicSubscription[A] with Flow.Subscriber[A] {
 
   private val lock = new ReentrantLock
 
@@ -63,9 +66,9 @@ final class BufferedSubscription[A](obs: Flow[_]) extends DynamicSubscription[A]
   def onComplete(): Unit =
     put(Success(None))
 
-  def onSubscribe(s: Subscription): Unit = ???
+  def onSubscribe(s: Flow.Subscription): Unit = ???
 
-  def onComplete[U](f: Try[Option[A]] => U)(implicit ec: ExecutionContext): Unit = {
+  def onComplete[U](f: Try[Option[A]] => U) given ExecutionContext: Unit = {
     val p = Promise[Option[A]]()
     waiters.enqueue(p)
     p.future.onComplete((tr: Try[Option[A]]) => {
