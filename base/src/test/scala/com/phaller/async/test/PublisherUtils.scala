@@ -33,4 +33,24 @@ object PublisherUtils {
       }
     })
 
+  def collectWhenError[T](obs: Flow.Publisher[T])(fun: (List[T], Throwable) => Unit): Unit =
+    obs.subscribe(new Flow.Subscriber[T] {
+      var vals: List[T] = List()
+      val lock = new ReentrantLock
+      def onNext(v: T): Unit = {
+        lock.lock()
+        vals = vals ::: List(v)
+        lock.unlock()
+      }
+      def onError(t: Throwable): Unit = {
+        fun(vals, t)
+      }
+      def onComplete(): Unit = {
+        fun(vals, null)
+      }
+      def onSubscribe(s: Flow.Subscription): Unit = {
+        // TODO
+      }
+    })
+
 }

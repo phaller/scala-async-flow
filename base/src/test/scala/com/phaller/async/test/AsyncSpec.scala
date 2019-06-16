@@ -218,6 +218,23 @@ class AsyncSpec {
     Await.ready(p.future, 5.seconds)
   }
 
+  @Test
+  def testExceptionBody(): Unit = {
+    val p = Promise[Boolean]()
+
+    val pub = rasync[Int] {
+      throw new Exception("boom")
+      42
+    }
+
+    PublisherUtils.collectWhenError(pub) { (vals: List[Int], error: Throwable) =>
+      assert(error.getMessage() == "boom")
+      p.success(true)
+    }
+
+    Await.ready(p.future, 5.seconds)
+  }
+
   def yielding(scope: ContinuationScope): Unit = {
     Continuation.`yield`(scope)
   }
