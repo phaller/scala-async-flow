@@ -107,30 +107,4 @@ object Async {
     }
   }
 
-  def main(args: Array[String]): Unit = {
-    println("================")
-    println("TEST 1")
-    println("================")
-    val SCOPE = new ContinuationScope("generators")
-    var continue = false
-    val cont = new Continuation(SCOPE, new Runnable {
-      def run(): Unit = {
-        println("hello from continuation")
-        while (!continue) {
-          println("suspending")
-          Continuation.`yield`(SCOPE)
-          println("resuming")
-        }
-        println("all the way to the end")
-      }
-    })
-    cont.run()
-    println("isDone: " + cont.isDone())
-    cont.run()
-    println("isDone: " + cont.isDone())
-
-    continue = true
-    cont.run()
-    println("isDone: " + cont.isDone())
-  }
 }
