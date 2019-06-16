@@ -20,7 +20,7 @@ trait Async[T] {
 
 object Async {
 
-  delegate publisher2Async[T, S] for Conversion[JFlow.Publisher[T], Async[Option[T]]] given (flow: Flow[S]) {
+  delegate [T, S] for Conversion[JFlow.Publisher[T], Async[Option[T]]] given (flow: Flow[S]) {
     def apply(pub: JFlow.Publisher[T]): Async[Option[T]] = {
       flow.getOrSubscribeTo(pub)
     }
