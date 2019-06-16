@@ -20,16 +20,14 @@ trait Async[T] {
 
 object Async {
 
-  delegate [T, S] for Conversion[JFlow.Publisher[T], Async[Option[T]]] given (flow: Flow[S]) {
-    def apply(pub: JFlow.Publisher[T]): Async[Option[T]] = {
-      flow.getOrSubscribeTo(pub)
-    }
-  }
-
   delegate PublisherOps {
-    def (pub: JFlow.Publisher[T]) awaitPost[T,S] given (flow: Flow[S], ec: ExecutionContext): Option[T] = {
+    def (pub: JFlow.Publisher[T]) await[T, S] given (flow: Flow[S], executor: ExecutionContext): Option[T] = {
       val a: Async[Option[T]] = flow.getOrSubscribeTo(pub)
       Async.await(a)
+    }
+
+    def (fut: Future[T]) await[T, S] given (flow: Flow[S], executor: ExecutionContext): T = {
+      Async.await(new AsyncFuture(fut))
     }
   }
 
@@ -96,7 +94,7 @@ object Async {
     p.future
   }
 
-  def await[T, S](a: Async[T]) given (flow: Flow[S], executor: ExecutionContext): T = {
+  private[this] def await[T, S](a: Async[T]) given (flow: Flow[S], executor: ExecutionContext): T = {
     val res = a.getCompleted
     if (res eq null) {
       a.onComplete(x => flow.resume())

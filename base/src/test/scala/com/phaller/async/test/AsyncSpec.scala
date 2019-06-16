@@ -7,8 +7,6 @@
 package com.phaller.async
 package test
 
-import scala.language.implicitConversions
-
 import org.junit.Test
 
 import scala.concurrent.{Future, Promise, ExecutionContext, Await}
@@ -16,9 +14,8 @@ import scala.concurrent.duration._
 
 import Async._
 import delegate Async._
-import Utils.{delay, delayError}
 
-import delegate AsyncFuture._
+import Utils.{delay, delayError}
 
 class AsyncSpec {
 
@@ -28,7 +25,7 @@ class AsyncSpec {
     val myFut = delay(500, true)
 
     val done = async[Boolean] {
-      val res = await(myFut)
+      val res = myFut.await
       res
     }
 
@@ -76,7 +73,7 @@ class AsyncSpec {
 
     val pub = rasync {
       yieldNext(5)
-      val num = await(fut)
+      val num = fut.await
       yieldNext(num)
       yieldDone()
     }
@@ -96,7 +93,7 @@ class AsyncSpec {
     val pub = rasync {
       yieldNext(5)
       try {
-        val num = await(fut)
+        val num = fut.await
       } catch {
         case e: Exception =>
           yieldNext(4)
@@ -124,7 +121,7 @@ class AsyncSpec {
 
     val pub2 = rasync {
       yieldNext(5)
-      val res = await(pub)
+      val res = pub.await
       yieldNext(res.get)
       yieldDone()
     }
@@ -147,7 +144,7 @@ class AsyncSpec {
     val pub2 = rasync {
       yieldNext(5)
       try {
-        val res = await(pub)
+        val res = pub.await
         yieldNext(res.get)
       } catch {
         case e: Exception =>
@@ -175,10 +172,10 @@ class AsyncSpec {
     }
 
     val pub2 = rasync[Int] {
-      var res = await(pub)
+      var res = pub.await
       while (res.nonEmpty) {
         yieldNext(res.get)
-        res = await(pub)
+        res = pub.await
       }
       yieldDone()
     }
@@ -202,10 +199,10 @@ class AsyncSpec {
     }
 
     val pub2 = rasync[Int] {
-      var res = pub.awaitPost
+      var res = pub.await
       while (res.nonEmpty) {
         yieldNext(res.get)
-        res = await(pub)
+        res = pub.await
       }
       yieldDone()
     }

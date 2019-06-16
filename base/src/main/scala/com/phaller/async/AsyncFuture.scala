@@ -9,15 +9,6 @@ package com.phaller.async
 import scala.concurrent.{Future, ExecutionContext}
 import scala.util.Try
 
-object AsyncFuture {
-
-  delegate future2Async[T] for Conversion[Future[T], Async[T]] {
-    def apply(fut: Future[T]): Async[T] =
-      new AsyncFuture(fut)
-  }
-
-}
-
 class AsyncFuture[A](fut: Future[A]) extends Async[A] {
 
   def onComplete[U](handler: Try[A] => U) given (executor: ExecutionContext): Unit = {

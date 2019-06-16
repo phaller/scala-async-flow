@@ -7,17 +7,15 @@
 package com.phaller.async
 package test
 
-import scala.language.implicitConversions
-
 import org.junit.Test
 
 import scala.concurrent.{Future, Promise, ExecutionContext, Await}
 import scala.concurrent.duration._
 
-import com.phaller.async.Async._
-import Utils.{delay, delayError}
+import Async._
+import delegate Async._
 
-import delegate AsyncFuture._
+import Utils.{delay, delayError}
 
 class SampleSpec {
 
@@ -55,15 +53,15 @@ class SampleSpec {
     }
 
     val stream = rasync[String] {
-      var dateOpt = await(dateStream)
+      var dateOpt = dateStream.await
       while (dateOpt.nonEmpty) {
         dateOpt.get match {
           case date(month, day) =>
-            yieldNext(s"It's ${await(nameOfMonth(month.toInt))}!")
+            yieldNext(s"It's ${nameOfMonth(month.toInt).await}!")
           case _ =>
             yieldNext("Not a date, mate!")
         }
-        dateOpt = await(dateStream)
+        dateOpt = dateStream.await
       }
       yieldDone()
     }
