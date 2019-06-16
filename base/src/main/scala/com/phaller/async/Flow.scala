@@ -9,15 +9,15 @@ package com.phaller.async
 import java.util.concurrent.Flow
 import java.util.concurrent.atomic.AtomicReference
 
-class PublisherImpl[T] extends Flow.Publisher[T] with Context[T] {
+final class Flow[T] private[async] () extends Flow.Publisher[T] {
 
-  private var cont: Continuation = _
-  private var scope: ContinuationScope = _
+  private[this] var cont: Continuation = _
+  private[this] var scope: ContinuationScope = _
 
-  private var subscribers =
+  private[this] var subscribers =
     new AtomicReference[List[Flow.Subscriber[_ >: T]]](List())
 
-  private var bufferOf: Map[Flow.Publisher[_], BufferedSubscription[_]] = Map()
+  private[this] var bufferOf: Map[Flow.Publisher[_], BufferedSubscription[_]] = Map()
 
   private[async] def init(c: Continuation, s: ContinuationScope): Unit = synchronized {
     cont = c
@@ -39,15 +39,15 @@ class PublisherImpl[T] extends Flow.Publisher[T] with Context[T] {
     }
   }
 
-  def yieldNext(event: T): Unit = {
+  private[async] def yieldNext(event: T): Unit = {
     emitNext(event)
   }
 
-  def yieldDone(): Unit = {
+  private[async] def yieldDone(): Unit = {
     emitComplete()
   }
 
-  def yieldError(error: Throwable): Unit = {
+  private[async] def yieldError(error: Throwable): Unit = {
     emitError(error)
   }
 

@@ -6,7 +6,7 @@
  */
 package com.phaller.async
 
-import java.util.concurrent.Flow
+import java.util.concurrent.{Flow => JFlow}
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -20,24 +20,21 @@ trait Async[T] {
 
 object Async {
 
-  delegate publisher2Async[T, S] for Conversion[Flow.Publisher[T], Async[Option[T]]] given (ctx: Context[S]) {
-    def apply(pub: Flow.Publisher[T]): Async[Option[T]] = {
-      val impl = ctx.asInstanceOf[PublisherImpl[S]]
-      impl.getOrSubscribeTo(pub)
+  delegate publisher2Async[T, S] for Conversion[JFlow.Publisher[T], Async[Option[T]]] given (flow: Flow[S]) {
+    def apply(pub: JFlow.Publisher[T]): Async[Option[T]] = {
+      flow.getOrSubscribeTo(pub)
     }
   }
 
   delegate PublisherOps {
-    def (pub: Flow.Publisher[T]) awaitPost[T,S] given (ctx: Context[S], ec: ExecutionContext): Option[T] = {
-      val impl = the[Context[S]].asInstanceOf[PublisherImpl[S]]
-      val a: Async[Option[T]] = impl.getOrSubscribeTo(pub)
+    def (pub: JFlow.Publisher[T]) awaitPost[T,S] given (flow: Flow[S], ec: ExecutionContext): Option[T] = {
+      val a: Async[Option[T]] = flow.getOrSubscribeTo(pub)
       Async.await(a)
     }
   }
 
-  def rasync[T](body: given Context[T] => T): Flow.Publisher[T] = {
-    val flow = new PublisherImpl[T]
-    delegate ctx for Context[T] = flow
+  def rasync[T](body: given Flow[T] => T): JFlow.Publisher[T] = {
+    delegate flow for Flow[T] = new Flow[T]
 
     val SCOPE = new ContinuationScope("async")
 
@@ -59,32 +56,28 @@ object Async {
     flow
   }
 
-  def yieldNext[T](event: T) given (ctx: Context[T]) = {
-    ctx.yieldNext(event)
+  def yieldNext[T](event: T) given (flow: Flow[T]) = {
+    flow.yieldNext(event)
   }
 
-  def yieldDone[T]() given (ctx: Context[T]): T = {
-    ctx.yieldDone()
+  def yieldDone[T]() given (flow: Flow[T]): T = {
+    flow.yieldDone()
 
-    val impl = ctx.asInstanceOf[PublisherImpl[T]]
-    impl.suspend()
+    flow.suspend()
 
     0.asInstanceOf[T]
   }
 
-  def yieldError[T](error: Throwable) given (ctx: Context[T]) = {
-    ctx.yieldError(error)
+  def yieldError[T](error: Throwable) given (flow: Flow[T]) = {
+    flow.yieldError(error)
 
-    val impl = ctx.asInstanceOf[PublisherImpl[T]]
-    impl.suspend()
+    flow.suspend()
 
     0.asInstanceOf[T]
   }
 
-  def async[T](body: given Context[T] => T): Future[T] = {
-    val pubImpl = new PublisherImpl[T]
-    // as the concrete instance we should use a private implementation type
-    delegate ctx for Context[T] = pubImpl
+  def async[T](body: given Flow[T] => T): Future[T] = {
+    delegate flow for Flow[T] = new Flow[T]
 
     val p = Promise[T]()
 
@@ -97,18 +90,17 @@ object Async {
       }
     })
 
-    pubImpl.init(cont, SCOPE)
+    flow.init(cont, SCOPE)
 
     cont.run()
     p.future
   }
 
-  def await[T, S](a: Async[T]) given (ctx: Context[S], executor: ExecutionContext): T = {
+  def await[T, S](a: Async[T]) given (flow: Flow[S], executor: ExecutionContext): T = {
     val res = a.getCompleted
     if (res eq null) {
-      val impl = ctx.asInstanceOf[PublisherImpl[S]]
-      a.onComplete(x => impl.resume())
-      impl.suspend()
+      a.onComplete(x => flow.resume())
+      flow.suspend()
       a.getCompleted.get
     } else {
       res.get
